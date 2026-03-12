@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imagineering Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+
+  .rate-limit {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    margin-bottom: 16px;
+  }
+
+  .rate-limit span { color: var(--accent); }
+
+  /* Settings gear */
+  .settings-toggle {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-left: 6px;
+    user-select: none;
+  }
+
+  .settings-toggle:hover { color: var(--accent); }
+
+  .settings-panel {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+  }
+
+  .settings-panel.open { display: flex; }
+
+  .settings-panel input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    width: 280px;
+    font-family: monospace;
+  }
+
+  .settings-panel button {
+    background: var(--border);
+    border: none;
+    border-radius: 4px;
+    color: var(--text);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .settings-panel button:hover { background: var(--accent); }
+
+  /* ── Grid layouts ──────────────────────────────────────── */
+
+  .grid-top {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .grid-middle {
+    margin-bottom: 16px;
+  }
+
+  .grid-bottom {
+    margin-bottom: 16px;
+  }
+
+  /* ── Cards ─────────────────────────────────────────────── */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card h2 .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  /* ── Identity cards ────────────────────────────────────── */
+
+  .identity-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+  }
+
+  .identity-meta { flex: 1; }
+
+  .identity-meta h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .identity-meta .handle {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+
+  .identity-meta .handle a {
+    color: var(--text-dim);
+    text-decoration: none;
+  }
+
+  .identity-meta .handle a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+  }
+
+  .stat-value {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+
+  .languages {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .lang-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .repo-list {
+    list-style: none;
+    font-size: 0.85rem;
+  }
+
+  .repo-list li {
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .repo-list li:first-child { border-top: none; }
+
+  .repo-name {
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .repo-name a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .repo-name a:hover { text-decoration: underline; }
+
+  .repo-desc {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    text-align: right;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── Timeline ──────────────────────────────────────────── */
+
+  .timeline {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  .timeline-item:last-child { border-bottom: none; }
+
+  .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .timeline-content { flex: 1; min-width: 0; }
+
+  .timeline-user {
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .timeline-action {
+    color: var(--text-dim);
+  }
+
+  .timeline-repo {
+    color: var(--accent);
+  }
+
+  .timeline-time {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .timeline-commits {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    margin-top: 2px;
+  }
+
+  /* ── Bar charts ────────────────────────────────────────── */
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 120px;
+    padding-top: 8px;
+  }
+
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar-pair {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bar {
+    width: 12px;
+    border-radius: 2px 2px 0 0;
+    min-height: 0;
+    transition: height 0.3s ease;
+  }
+
+  .bar-label {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  /* ── Legend ─────────────────────────────────────────────── */
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── Loading / Error ───────────────────────────────────── */
+
+  .loading {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  .loading::after {
+    content: '...';
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .error {
+    color: #f85149;
+    font-size: 0.8rem;
+    padding: 8px;
+    background: rgba(248, 81, 73, 0.1);
+    border-radius: 4px;
+  }
+
+  /* ── Scrollbar ─────────────────────────────────────────── */
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Imagineering</h1>
+<p class="subtitle">Melbourne build &amp; share meetup</p>
+<p class="rate-limit">GitHub API: <span id="rate-remaining">--</span> / <span id="rate-total">60</span> requests remaining (resets <span id="rate-reset">--</span>) <span class="settings-toggle" id="settings-toggle" title="Configure GitHub token">&#9881;</span></p>
+<div class="settings-panel" id="settings-panel">
+  <input type="password" id="gh-token" placeholder="GitHub personal access token (optional)" autocomplete="off">
+  <button id="save-token">Save</button>
+  <button id="clear-token">Clear</button>
+</div>
+
+<!-- Identity Cards (one per team member) -->
+<div class="grid-top" id="identity-cards"></div>
+
+<!-- Activity Timeline -->
+<div class="grid-middle">
+  <div class="card">
+    <p class="section-label">Activity Timeline</p>
+    <h2>Recent Events</h2>
+    <div class="legend" id="timeline-legend"></div>
+    <div class="timeline" id="timeline">
+      <div class="loading">Loading</div>
+    </div>
+  </div>
+</div>
+
+<!-- Commit Velocity -->
+<div class="grid-bottom">
+  <div class="card">
+    <p class="section-label">Commit Velocity</p>
+    <h2>Daily Pushes</h2>
+    <div class="legend" id="chart-legend"></div>
+    <div class="bar-chart" id="commit-chart">
+      <div class="loading">Loading</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  TEAM — Add new members here
+// ══════════════════════════════════════════════════════════════
+const TEAM = [
+  { name: 'Robin',  login: 'RaggedR' },
+  { name: 'Nick',   login: 'nickmeinhold' },
+];
+
+// ── Color palette (assigned in TEAM order) ──────────────────
+const COLORS = [
+  '#a78bfa',   // purple
+  '#58d68d',   // green
+  '#f59e0b',   // amber
+  '#38bdf8',   // sky
+  '#fb7185',   // rose
+  '#34d399',   // emerald
+  '#c084fc',   // violet
+  '#fbbf24',   // yellow
+];
+
+TEAM.forEach((m, i) => {
+  m.color = COLORS[i % COLORS.length];
+  m.colorBg = m.color + '1f';  // ~12% opacity hex
+});
+
+const API = 'https://api.github.com';
+const CACHE_TTL = 5 * 60 * 1000;
+
+// ── Token management ────────────────────────────────────────
+
+function getToken() { return localStorage.getItem('gh_token') || ''; }
+function setToken(t) { t ? localStorage.setItem('gh_token', t) : localStorage.removeItem('gh_token'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('settings-toggle');
+  const panel = document.getElementById('settings-panel');
+  const input = document.getElementById('gh-token');
+  toggle.addEventListener('click', () => panel.classList.toggle('open'));
+  input.value = getToken() ? '••••••••' : '';
+  document.getElementById('save-token').addEventListener('click', () => {
+    const val = input.value.trim();
+    if (val && val !== '••••••••') setToken(val);
+    input.value = '••••••••';
+    panel.classList.remove('open');
+  });
+  document.getElementById('clear-token').addEventListener('click', () => {
+    setToken('');
+    input.value = '';
+  });
+});
+
+// ── Cache helpers ───────────────────────────────────────────
+
+function cacheGet(path) {
+  try {
+    const raw = localStorage.getItem('ghcache:' + path);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) return null;
+    return data;
+  } catch { return null; }
+}
+
+function cacheSet(path, data) {
+  try {
+    localStorage.setItem('ghcache:' + path, JSON.stringify({ data, ts: Date.now() }));
+  } catch {}
+}
+
+// ── API helpers ─────────────────────────────────────────────
+
+async function ghFetch(path) {
+  const cached = cacheGet(path);
+  if (cached) return cached;
+
+  const headers = { 'Accept': 'application/vnd.github.v3+json' };
+  const token = getToken();
+  if (token) headers['Authorization'] = `token ${token}`;
+
+  const res = await fetch(`${API}${path}`, { headers });
+
+  const remaining = res.headers.get('X-RateLimit-Remaining');
+  const limit = res.headers.get('X-RateLimit-Limit');
+  const reset = res.headers.get('X-RateLimit-Reset');
+  if (remaining !== null) document.getElementById('rate-remaining').textContent = remaining;
+  if (limit !== null) document.getElementById('rate-total').textContent = limit;
+  if (reset !== null) {
+    document.getElementById('rate-reset').textContent = new Date(parseInt(reset) * 1000).toLocaleTimeString();
+  }
+
+  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${path}`);
+  const data = await res.json();
+  cacheSet(path, data);
+  return data;
+}
+
+function timeAgo(dateStr) {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Identity Cards ──────────────────────────────────────────
+
+function renderIdentityCards() {
+  const container = document.getElementById('identity-cards');
+  container.innerHTML = TEAM.map(m => `
+    <div class="card" id="card-${m.login}">
+      <p class="section-label">Identity</p>
+      <div class="identity-header">
+        <img class="avatar" id="avatar-${m.login}" src="https://avatars.githubusercontent.com/${m.login}" alt="${m.name}">
+        <div class="identity-meta">
+          <h3 style="color:${m.color}">${m.name}</h3>
+          <div class="handle"><a href="https://github.com/${m.login}" target="_blank">@${m.login}</a></div>
+        </div>
+      </div>
+      <div class="stats" id="stats-${m.login}">
+        <div class="loading">Loading</div>
+      </div>
+      <div class="languages" id="langs-${m.login}"></div>
+      <ul class="repo-list" id="repos-${m.login}"></ul>
+    </div>
+  `).join('');
+}
+
+async function loadIdentity(member) {
+  const { login, color } = member;
+  const statsEl = document.getElementById(`stats-${login}`);
+  const langsEl = document.getElementById(`langs-${login}`);
+  const reposEl = document.getElementById(`repos-${login}`);
+
+  const [profileResult, reposResult] = await Promise.allSettled([
+    ghFetch(`/users/${login}`),
+    ghFetch(`/users/${login}/repos?sort=updated&per_page=100`)
+  ]);
+
+  const profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
+  const repos = reposResult.status === 'fulfilled' ? reposResult.value : null;
+
+  if (profile) {
+    document.getElementById(`avatar-${login}`).src = profile.avatar_url;
+  }
+
+  if (profile || repos) {
+    const lastPush = repos && repos.length > 0
+      ? repos.reduce((latest, r) => r.pushed_at > latest ? r.pushed_at : latest, repos[0].pushed_at)
+      : null;
+    statsEl.innerHTML = `
+      <div><span class="stat-value">${profile ? profile.public_repos : '?'}</span><br><span class="stat-label">repos</span></div>
+      <div><span class="stat-value">${repos ? repos.filter(r => !r.fork).length : '?'}</span><br><span class="stat-label">original</span></div>
+      <div><span class="stat-value">${lastPush ? timeAgo(lastPush) : '—'}</span><br><span class="stat-label">last push</span></div>
+    `;
+  } else {
+    const err = profileResult.reason || reposResult.reason;
+    statsEl.innerHTML = `<div class="error">API error — ${err.message}</div>`;
+  }
+
+  if (repos) {
+    const langs = new Set();
+    repos.forEach(r => { if (r.language) langs.add(r.language); });
+    langsEl.innerHTML = [...langs].map(l =>
+      `<span class="lang-tag" style="background:${member.colorBg};color:${color}">${l}</span>`
+    ).join('');
+  }
+
+  if (repos) {
+    const nonFork = repos.filter(r => !r.fork).sort((a, b) => b.pushed_at.localeCompare(a.pushed_at)).slice(0, 6);
+    reposEl.innerHTML = nonFork.map(r => `
+      <li>
+        <span class="repo-name"><a href="${r.html_url}" target="_blank">${r.name}</a></span>
+        <span class="repo-desc">${r.description || ''}</span>
+      </li>
+    `).join('');
+  }
+}
+
+// ── Activity Timeline ───────────────────────────────────────
+
+async function loadTimeline() {
+  const timelineEl = document.getElementById('timeline');
+  const legendEl = document.getElementById('timeline-legend');
+
+  legendEl.innerHTML = TEAM.map(m =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${m.color}"></div> ${m.name}</div>`
+  ).join('');
+
+  try {
+    const results = await Promise.allSettled(
+      TEAM.map(m => ghFetch(`/users/${m.login}/events?per_page=30`))
+    );
+
+    const allEvents = [];
+    results.forEach((result, i) => {
+      if (result.status === 'fulfilled') {
+        result.value.forEach(e => { e._teamIdx = i; });
+        allEvents.push(...result.value);
+      }
+    });
+
+    allEvents.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const top = allEvents.slice(0, 30);
+
+    if (top.length === 0) {
+      timelineEl.innerHTML = '<div class="loading">No events found</div>';
+      return { allEvents };
+    }
+
+    timelineEl.innerHTML = top.map(e => {
+      const m = TEAM[e._teamIdx];
+      const repoName = e.repo.name.split('/')[1];
+
+      let action = '';
+      let detail = '';
+
+      switch (e.type) {
+        case 'PushEvent': {
+          const count = e.payload.commits ? e.payload.commits.length : 0;
+          action = count > 0 ? `pushed ${count} commit${count !== 1 ? 's' : ''} to` : 'pushed to';
+          if (e.payload.commits && e.payload.commits.length > 0) {
+            detail = e.payload.commits.map(c =>
+              `<span style="color:var(--text-dim);font-family:monospace;font-size:0.7rem">${c.sha.slice(0,7)}</span> ${escapeHtml(c.message.split('\n')[0])}`
+            ).slice(0, 3).join('<br>');
+          }
+          break;
+        }
+        case 'CreateEvent':
+          action = `created ${e.payload.ref_type}${e.payload.ref ? ' <b>' + escapeHtml(e.payload.ref) + '</b> in' : ''}`;
+          break;
+        case 'ForkEvent':
+          action = 'forked';
+          break;
+        case 'WatchEvent':
+          action = 'starred';
+          break;
+        case 'IssuesEvent':
+          action = `${e.payload.action} issue in`;
+          break;
+        case 'PullRequestEvent':
+          action = `${e.payload.action} PR in`;
+          break;
+        case 'DeleteEvent':
+          action = `deleted ${e.payload.ref_type} <b>${escapeHtml(e.payload.ref || '')}</b> in`;
+          break;
+        default:
+          action = `${e.type.replace('Event','')} in`;
+      }
+
+      return `
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:${m.color}"></div>
+          <div class="timeline-content">
+            <span class="timeline-user" style="color:${m.color}">${m.name}</span>
+            <span class="timeline-action">${action}</span>
+            <span class="timeline-repo">${repoName}</span>
+            ${detail ? `<div class="timeline-commits">${detail}</div>` : ''}
+          </div>
+          <span class="timeline-time">${timeAgo(e.created_at)}</span>
+        </div>
+      `;
+    }).join('');
+
+    return { allEvents };
+  } catch (err) {
+    timelineEl.innerHTML = `<div class="error">${err.message}</div>`;
+    return { allEvents: [] };
+  }
+}
+
+// ── Commit Velocity ─────────────────────────────────────────
+
+function loadCommitVelocity(allEvents) {
+  const chartEl = document.getElementById('commit-chart');
+  const legendEl = document.getElementById('chart-legend');
+
+  legendEl.innerHTML = TEAM.map(m =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${m.color}"></div> ${m.name}</div>`
+  ).join('');
+
+  const pushes = {};
+  allEvents.filter(e => e.type === 'PushEvent').forEach(e => {
+    const day = e.created_at.slice(0, 10);
+    if (!pushes[day]) pushes[day] = TEAM.map(() => 0);
+    pushes[day][e._teamIdx] += e.payload.commits ? e.payload.commits.length : 1;
+  });
+
+  const days = Object.keys(pushes).sort();
+  if (days.length === 0) {
+    chartEl.innerHTML = '<div class="loading">No push events</div>';
+    return;
+  }
+
+  const maxCount = Math.max(...days.flatMap(d => pushes[d]), 1);
+
+  chartEl.innerHTML = days.map(d => {
+    const bars = TEAM.map((m, i) => {
+      const count = pushes[d][i];
+      const h = Math.round((count / maxCount) * 100);
+      return `<div class="bar" style="height:${h}%;background:${m.color}" title="${m.name}: ${count}"></div>`;
+    }).join('');
+    return `
+      <div class="bar-group">
+        <div class="bar-pair">${bars}</div>
+        <div class="bar-label">${d.slice(5)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Boot ────────────────────────────────────────────────────
+
+async function init() {
+  renderIdentityCards();
+
+  const [, timelineData] = await Promise.all([
+    Promise.all(TEAM.map(m => loadIdentity(m))),
+    loadTimeline()
+  ]);
+
+  if (timelineData && timelineData.allEvents) {
+    loadCommitVelocity(timelineData.allEvents);
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
