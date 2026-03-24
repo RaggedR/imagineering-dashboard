@@ -654,7 +654,7 @@ async function loadTimeline() {
 
   try {
     const results = await Promise.allSettled(
-      TEAM.map(m => ghFetch(`/users/${m.login}/events?per_page=30`))
+      TEAM.map(m => ghFetch(`/users/${m.login}/events?per_page=100`))
     );
 
     const allEvents = [];
