@@ -753,10 +753,7 @@ function loadCommitVelocity(allEvents) {
     activity[d] = TEAM.map(() => 0);
   }
 
-  allEvents.filter(e =>
-    e.type === 'PushEvent' && e.payload.ref &&
-    !e.payload.ref.endsWith('/main') && !e.payload.ref.endsWith('/master')
-  ).forEach(e => {
+  allEvents.filter(e => e.type === 'PushEvent').forEach(e => {
     const day = e.created_at.slice(0, 10);
     if (!activity[day]) return;
     const count = e.payload.commits ? e.payload.commits.length : 1;
