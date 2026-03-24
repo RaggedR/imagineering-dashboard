@@ -440,7 +440,7 @@
 <div class="grid-bottom">
   <div class="card">
     <p class="section-label">Productivity</p>
-    <h2>Daily Activity</h2>
+    <h2>This Week</h2>
     <div class="legend" id="chart-legend"></div>
     <div class="bar-chart" id="commit-chart">
       <div class="loading">Loading</div>
@@ -744,24 +744,24 @@ function loadCommitVelocity(allEvents) {
     `<div class="legend-item"><div class="legend-dot" style="background:${m.color}"></div> ${m.name}</div>`
   ).join('');
 
-  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  // Build array of last 7 days
+  const days = [];
   const activity = {};
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    days.push(d);
+    activity[d] = TEAM.map(() => 0);
+  }
+
   allEvents.filter(e =>
     e.type === 'PushEvent' && e.payload.ref &&
     !e.payload.ref.endsWith('/main') && !e.payload.ref.endsWith('/master')
   ).forEach(e => {
     const day = e.created_at.slice(0, 10);
-    if (day < cutoff) return;
+    if (!activity[day]) return;
     const count = e.payload.commits ? e.payload.commits.length : 1;
-    if (!activity[day]) activity[day] = TEAM.map(() => 0);
     activity[day][e._teamIdx] += count;
   });
-
-  const days = Object.keys(activity).sort();
-  if (days.length === 0) {
-    chartEl.innerHTML = '<div class="loading">No activity in the last 14 days</div>';
-    return;
-  }
 
   const maxCount = Math.max(...days.flatMap(d => activity[d]), 1);
 
@@ -774,7 +774,7 @@ function loadCommitVelocity(allEvents) {
     return `
       <div class="bar-group">
         <div class="bar-pair">${bars}</div>
-        <div class="bar-label">${d.slice(5)}</div>
+        <div class="bar-label">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d + 'T12:00:00').getDay()]}</div>
       </div>
     `;
   }).join('');
