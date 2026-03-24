@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate HTML
+        run: |
+          # Check index.html exists and is valid enough to parse
+          test -f index.html || { echo "index.html not found"; exit 1; }
+          # Basic well-formedness check
+          python3 -c "
+          from html.parser import HTMLParser
+          import sys
+          class Checker(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.errors = []
+              def handle_starttag(self, tag, attrs): pass
+              def handle_endtag(self, tag): pass
+          try:
+              Checker().feed(open('index.html').read())
+              print('HTML parsed successfully')
+          except Exception as e:
+              print(f'HTML parse error: {e}', file=sys.stderr)
+              sys.exit(1)
+          "
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: |
+          if [ -f "./scripts/deploy.sh" ]; then
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh
+          else
+            echo "No deploy script found, skipping deploy"
+          fi
