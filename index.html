@@ -665,8 +665,10 @@ async function loadTimeline() {
       }
     });
 
-    allEvents.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    const top = allEvents.slice(0, 30);
+    const TIMELINE_TYPES = ['PushEvent', 'PullRequestEvent', 'IssuesEvent'];
+    const relevant = allEvents.filter(e => TIMELINE_TYPES.includes(e.type));
+    relevant.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const top = relevant.slice(0, 30);
 
     if (top.length === 0) {
       timelineEl.innerHTML = '<div class="loading">No events — add a GitHub token via &#9881; if rate limited</div>';
@@ -691,23 +693,11 @@ async function loadTimeline() {
           }
           break;
         }
-        case 'CreateEvent':
-          action = `created ${e.payload.ref_type}${e.payload.ref ? ' <b>' + escapeHtml(e.payload.ref) + '</b> in' : ''}`;
-          break;
-        case 'ForkEvent':
-          action = 'forked';
-          break;
-        case 'WatchEvent':
-          action = 'starred';
-          break;
         case 'IssuesEvent':
           action = `${escapeHtml(e.payload.action)} issue in`;
           break;
         case 'PullRequestEvent':
           action = `${escapeHtml(e.payload.action)} PR in`;
-          break;
-        case 'DeleteEvent':
-          action = `deleted ${e.payload.ref_type} <b>${escapeHtml(e.payload.ref || '')}</b> in`;
           break;
         default:
           action = `${escapeHtml(e.type.replace('Event',''))} in`;
@@ -744,9 +734,11 @@ function loadCommitVelocity(allEvents) {
     `<div class="legend-item"><div class="legend-dot" style="background:${m.color}"></div> ${m.name}</div>`
   ).join('');
 
+  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const pushes = {};
   allEvents.filter(e => e.type === 'PushEvent').forEach(e => {
     const day = e.created_at.slice(0, 10);
+    if (day < cutoff) return;
     if (!pushes[day]) pushes[day] = TEAM.map(() => 0);
     pushes[day][e._teamIdx] += e.payload.commits ? e.payload.commits.length : 1;
   });
