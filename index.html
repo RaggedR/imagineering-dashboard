@@ -290,6 +290,11 @@
 
   .timeline-repo {
     color: var(--accent);
+    text-decoration: none;
+  }
+
+  .timeline-repo:hover {
+    text-decoration: underline;
   }
 
   .timeline-time {
@@ -708,7 +713,7 @@ async function loadTimeline() {
           <div class="timeline-content">
             <span class="timeline-user" style="color:${m.color}">${m.name}</span>
             <span class="timeline-action">${action}</span>
-            <span class="timeline-repo">${repoName}</span>
+            <a class="timeline-repo" href="https://github.com/${e.repo.name}" target="_blank">${repoName}</a>
             ${detail ? `<div class="timeline-commits">${detail}</div>` : ''}
           </div>
           <span class="timeline-time">${timeAgo(e.created_at)}</span>
