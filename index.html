@@ -573,7 +573,7 @@ function renderIdentityCards() {
         <img class="avatar" id="avatar-${m.login}" src="https://avatars.githubusercontent.com/${m.login}" alt="${m.name}">
         <div class="identity-meta">
           <h3 style="color:${m.color}">${m.name}</h3>
-          <div class="handle"><a href="https://github.com/${m.login}" target="_blank">@${m.login}</a></div>
+          <div class="handle"><a href="https://github.com/${m.login}" target="_blank" rel="noopener noreferrer">@${m.login}</a></div>
         </div>
       </div>
       <div class="stats" id="stats-${m.login}">
@@ -629,7 +629,7 @@ async function loadIdentity(member) {
     const nonFork = repos.filter(r => !r.fork).sort((a, b) => b.pushed_at.localeCompare(a.pushed_at)).slice(0, 6);
     reposEl.innerHTML = nonFork.map(r => `
       <li>
-        <span class="repo-name"><a href="${r.html_url}" target="_blank">${r.name}</a></span>
+        <span class="repo-name"><a href="${r.html_url}" target="_blank" rel="noopener noreferrer">${r.name}</a></span>
         <span class="repo-desc">${r.description || ''}</span>
       </li>
     `).join('');
@@ -713,7 +713,7 @@ async function loadTimeline() {
           <div class="timeline-content">
             <span class="timeline-user" style="color:${m.color}">${m.name}</span>
             <span class="timeline-action">${action}</span>
-            <a class="timeline-repo" href="https://github.com/${e.repo.name}" target="_blank">${repoName}</a>
+            <a class="timeline-repo" href="https://github.com/${escapeHtml(e.repo.name)}" target="_blank" rel="noopener noreferrer">${escapeHtml(repoName)}</a>
             ${detail ? `<div class="timeline-commits">${detail}</div>` : ''}
           </div>
           <span class="timeline-time">${timeAgo(e.created_at)}</span>
