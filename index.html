@@ -541,8 +541,10 @@ async function ghFetch(path) {
   }
 
   if (!res.ok) {
-    const stale = cacheGet(path, true);
-    if (stale) return stale;
+    if (res.status === 403 || res.status === 429) {
+      const stale = cacheGet(path, true);
+      if (stale) return stale;
+    }
     throw new Error(`GitHub API ${res.status}: ${path}`);
   }
   const data = await res.json();
@@ -618,7 +620,6 @@ async function loadIdentity(member) {
       <div><span class="stat-value">${lastPush ? timeAgo(lastPush) : '—'}</span><br><span class="stat-label">last push</span></div>
     `;
   } else {
-    const err = profileResult.reason || reposResult.reason;
     statsEl.innerHTML = `<div class="error">Rate limited — click &#9881; to add a GitHub token</div>`;
   }
 
