@@ -476,7 +476,7 @@ TEAM.forEach((m, i) => {
 });
 
 const API = 'https://api.github.com';
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 30 * 60 * 1000;
 
 // ── Token management ────────────────────────────────────────
 
@@ -503,12 +503,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Cache helpers ───────────────────────────────────────────
 
-function cacheGet(path) {
+function cacheGet(path, allowStale) {
   try {
     const raw = localStorage.getItem('ghcache:' + path);
     if (!raw) return null;
     const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) return null;
+    if (!allowStale && Date.now() - ts > CACHE_TTL) return null;
     return data;
   } catch { return null; }
 }
@@ -540,7 +540,11 @@ async function ghFetch(path) {
     document.getElementById('rate-reset').textContent = new Date(parseInt(reset) * 1000).toLocaleTimeString();
   }
 
-  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${path}`);
+  if (!res.ok) {
+    const stale = cacheGet(path, true);
+    if (stale) return stale;
+    throw new Error(`GitHub API ${res.status}: ${path}`);
+  }
   const data = await res.json();
   cacheSet(path, data);
   return data;
@@ -615,7 +619,7 @@ async function loadIdentity(member) {
     `;
   } else {
     const err = profileResult.reason || reposResult.reason;
-    statsEl.innerHTML = `<div class="error">API error — ${escapeHtml(err.message)}</div>`;
+    statsEl.innerHTML = `<div class="error">Rate limited — click &#9881; to add a GitHub token</div>`;
   }
 
   if (repos) {
@@ -664,7 +668,7 @@ async function loadTimeline() {
     const top = allEvents.slice(0, 30);
 
     if (top.length === 0) {
-      timelineEl.innerHTML = '<div class="loading">No events found</div>';
+      timelineEl.innerHTML = '<div class="loading">No events — add a GitHub token via &#9881; if rate limited</div>';
       return { allEvents };
     }
 
@@ -724,7 +728,7 @@ async function loadTimeline() {
 
     return { allEvents };
   } catch (err) {
-    timelineEl.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+    timelineEl.innerHTML = `<div class="error">Rate limited — click &#9881; to add a GitHub token</div>`;
     return { allEvents: [] };
   }
 }
