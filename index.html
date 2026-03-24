@@ -439,8 +439,8 @@
 <!-- Commit Velocity -->
 <div class="grid-bottom">
   <div class="card">
-    <p class="section-label">Commit Velocity</p>
-    <h2>Daily Pushes</h2>
+    <p class="section-label">Productivity</p>
+    <h2>Daily Activity</h2>
     <div class="legend" id="chart-legend"></div>
     <div class="bar-chart" id="commit-chart">
       <div class="loading">Loading</div>
@@ -665,10 +665,8 @@ async function loadTimeline() {
       }
     });
 
-    const TIMELINE_TYPES = ['PushEvent', 'PullRequestEvent', 'IssuesEvent'];
-    const relevant = allEvents.filter(e => TIMELINE_TYPES.includes(e.type));
-    relevant.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    const top = relevant.slice(0, 30);
+    allEvents.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const top = allEvents.slice(0, 30);
 
     if (top.length === 0) {
       timelineEl.innerHTML = '<div class="loading">No events — add a GitHub token via &#9881; if rate limited</div>';
@@ -693,11 +691,23 @@ async function loadTimeline() {
           }
           break;
         }
+        case 'CreateEvent':
+          action = `created ${e.payload.ref_type}${e.payload.ref ? ' <b>' + escapeHtml(e.payload.ref) + '</b> in' : ''}`;
+          break;
+        case 'ForkEvent':
+          action = 'forked';
+          break;
+        case 'WatchEvent':
+          action = 'starred';
+          break;
         case 'IssuesEvent':
           action = `${escapeHtml(e.payload.action)} issue in`;
           break;
         case 'PullRequestEvent':
           action = `${escapeHtml(e.payload.action)} PR in`;
+          break;
+        case 'DeleteEvent':
+          action = `deleted ${e.payload.ref_type} <b>${escapeHtml(e.payload.ref || '')}</b> in`;
           break;
         default:
           action = `${escapeHtml(e.type.replace('Event',''))} in`;
@@ -735,25 +745,35 @@ function loadCommitVelocity(allEvents) {
   ).join('');
 
   const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const pushes = {};
-  allEvents.filter(e => e.type === 'PushEvent').forEach(e => {
+  const activity = {};
+  allEvents.forEach(e => {
     const day = e.created_at.slice(0, 10);
     if (day < cutoff) return;
-    if (!pushes[day]) pushes[day] = TEAM.map(() => 0);
-    pushes[day][e._teamIdx] += e.payload.commits ? e.payload.commits.length : 1;
+
+    let count = 0;
+    if (e.type === 'PushEvent' && e.payload.ref && !e.payload.ref.endsWith('/main') && !e.payload.ref.endsWith('/master')) {
+      count = e.payload.commits ? e.payload.commits.length : 1;
+    } else if (e.type === 'PullRequestEvent' && (e.payload.action === 'opened' || e.payload.action === 'closed')) {
+      count = 1;
+    }
+
+    if (count > 0) {
+      if (!activity[day]) activity[day] = TEAM.map(() => 0);
+      activity[day][e._teamIdx] += count;
+    }
   });
 
-  const days = Object.keys(pushes).sort();
+  const days = Object.keys(activity).sort();
   if (days.length === 0) {
-    chartEl.innerHTML = '<div class="loading">No push events</div>';
+    chartEl.innerHTML = '<div class="loading">No activity in the last 14 days</div>';
     return;
   }
 
-  const maxCount = Math.max(...days.flatMap(d => pushes[d]), 1);
+  const maxCount = Math.max(...days.flatMap(d => activity[d]), 1);
 
   chartEl.innerHTML = days.map(d => {
     const bars = TEAM.map((m, i) => {
-      const count = pushes[d][i];
+      const count = activity[d][i];
       const h = Math.round((count / maxCount) * 100);
       return `<div class="bar" style="height:${h}%;background:${m.color}" title="${m.name}: ${count}"></div>`;
     }).join('');
