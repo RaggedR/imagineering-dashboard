@@ -614,14 +614,14 @@ async function loadIdentity(member) {
     `;
   } else {
     const err = profileResult.reason || reposResult.reason;
-    statsEl.innerHTML = `<div class="error">API error — ${err.message}</div>`;
+    statsEl.innerHTML = `<div class="error">API error — ${escapeHtml(err.message)}</div>`;
   }
 
   if (repos) {
     const langs = new Set();
     repos.forEach(r => { if (r.language) langs.add(r.language); });
     langsEl.innerHTML = [...langs].map(l =>
-      `<span class="lang-tag" style="background:${member.colorBg};color:${color}">${l}</span>`
+      `<span class="lang-tag" style="background:${member.colorBg};color:${color}">${escapeHtml(l)}</span>`
     ).join('');
   }
 
@@ -629,8 +629,8 @@ async function loadIdentity(member) {
     const nonFork = repos.filter(r => !r.fork).sort((a, b) => b.pushed_at.localeCompare(a.pushed_at)).slice(0, 6);
     reposEl.innerHTML = nonFork.map(r => `
       <li>
-        <span class="repo-name"><a href="${r.html_url}" target="_blank" rel="noopener noreferrer">${r.name}</a></span>
-        <span class="repo-desc">${r.description || ''}</span>
+        <span class="repo-name"><a href="${r.html_url}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.name)}</a></span>
+        <span class="repo-desc">${escapeHtml(r.description || '')}</span>
       </li>
     `).join('');
   }
@@ -695,16 +695,16 @@ async function loadTimeline() {
           action = 'starred';
           break;
         case 'IssuesEvent':
-          action = `${e.payload.action} issue in`;
+          action = `${escapeHtml(e.payload.action)} issue in`;
           break;
         case 'PullRequestEvent':
-          action = `${e.payload.action} PR in`;
+          action = `${escapeHtml(e.payload.action)} PR in`;
           break;
         case 'DeleteEvent':
           action = `deleted ${e.payload.ref_type} <b>${escapeHtml(e.payload.ref || '')}</b> in`;
           break;
         default:
-          action = `${e.type.replace('Event','')} in`;
+          action = `${escapeHtml(e.type.replace('Event',''))} in`;
       }
 
       return `
@@ -723,7 +723,7 @@ async function loadTimeline() {
 
     return { allEvents };
   } catch (err) {
-    timelineEl.innerHTML = `<div class="error">${err.message}</div>`;
+    timelineEl.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
     return { allEvents: [] };
   }
 }
