@@ -771,7 +771,7 @@ function loadCommitVelocity(allEvents) {
     return `
       <div class="bar-group">
         <div class="bar-pair">${bars}</div>
-        <div class="bar-label">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d + 'T12:00:00').getDay()]}</div>
+        <div class="bar-label">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d + 'T12:00:00').getDay()]} ${d.slice(8)}</div>
       </div>
     `;
   }).join('');
