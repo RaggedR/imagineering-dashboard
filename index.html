@@ -561,6 +561,24 @@ async function ghFetch(path) {
   return data;
 }
 
+async function ghFetchAll(path) {
+  const cached = cacheGet(path + '__all');
+  if (cached) return cached;
+
+  let results = [];
+  let page = 1;
+  const sep = path.includes('?') ? '&' : '?';
+  while (true) {
+    const data = await ghFetch(`${path}${sep}page=${page}&per_page=100`);
+    if (!Array.isArray(data) || data.length === 0) break;
+    results = results.concat(data);
+    if (data.length < 100) break;
+    page++;
+  }
+  cacheSet(path + '__all', results);
+  return results;
+}
+
 function timeAgo(dateStr) {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (seconds < 60) return 'just now';
@@ -609,7 +627,7 @@ async function loadIdentity(member) {
 
   const [profileResult, reposResult] = await Promise.allSettled([
     ghFetch(`/users/${login}`),
-    ghFetch(`/users/${login}/repos?sort=updated&per_page=100`)
+    ghFetchAll(`/users/${login}/repos?sort=updated`)
   ]);
 
   const profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
