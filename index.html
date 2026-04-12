@@ -314,19 +314,17 @@
   /* ── Bar charts ────────────────────────────────────────── */
 
   .bar-chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 4px;
-    height: 120px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 8px;
     padding-top: 8px;
   }
 
   .bar-group {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    height: 100%;
+    height: 120px;
     justify-content: flex-end;
   }
 
@@ -465,6 +463,7 @@ const TEAM = [
   { name: 'Angie',    login: 'anjsimmo' },
   { name: 'Janis',    login: 'shuttle1987' },
   { name: 'Jacob',    login: 'jroth1111' },
+  { name: 'Ryu',      login: 'ryumacodes' },
 ];
 
 // ── Color palette (assigned in TEAM order) ──────────────────
@@ -479,6 +478,9 @@ const COLORS = [
   '#fbbf24',   // yellow
   '#f472b6',   // pink
   '#22d3ee',   // cyan
+  '#f97316',   // orange
+  '#a3e635',   // lime
+  '#e879f9',   // fuchsia
 ];
 
 TEAM.forEach((m, i) => {
